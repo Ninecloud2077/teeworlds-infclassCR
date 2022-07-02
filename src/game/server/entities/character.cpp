@@ -43,6 +43,7 @@
 #include "superweapon-indicator.h"
 #include "laser-teleport.h"
 #include "police-shield.h"
+#include "leader-flag.h"
 
 //input count
 struct CInputCount
@@ -4332,6 +4333,21 @@ void CCharacter::ClassSpawnAttributes()
 			{
 				GameServer()->SendChatTarget_Localization(m_pPlayer->GetCID(), CHATCATEGORY_DEFAULT, _("Type “/help {str:ClassName}” for more information about your class"), "ClassName", "slime", NULL);
 				m_pPlayer->m_knownClass[PLAYERCLASS_SLIME] = true;
+			}
+			break;
+		case PLAYERCLASS_LEADER:
+			m_Health = 10;
+			m_Armor = 10;
+			RemoveAllGun();
+			m_aWeapons[WEAPON_HAMMER].m_Got = true;
+			GiveWeapon(WEAPON_HAMMER, -1);
+			m_ActiveWeapon = WEAPON_HAMMER;
+			
+			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_LEADER);
+			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_LEADER))
+			{
+				GameServer()->SendChatTarget_Localization(m_pPlayer->GetCID(), CHATCATEGORY_DEFAULT, _("Type “/help {str:ClassName}” for more information about your class"), "ClassName", "hunter", NULL);
+				m_pPlayer->m_knownClass[PLAYERCLASS_LEADER] = true;
 			}
 			break;
 		case PLAYERCLASS_UNDEAD:

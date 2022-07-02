@@ -119,6 +119,7 @@ MACRO_CONFIG_INT(InfProbaGhoul, inf_proba_ghoul, 5, 0, 100, CFGFLAG_SERVER, "Pro
 MACRO_CONFIG_INT(InfProbaSlug, inf_proba_slug, 5, 0, 100, CFGFLAG_SERVER, "Probability for an infected to be a slug")
 MACRO_CONFIG_INT(InfProbaVoodoo, inf_proba_voodoo, 6, 0, 100, CFGFLAG_SERVER, "Probability for an infected to be a voodoo")
 MACRO_CONFIG_INT(InfProbaSlime, inf_proba_slime, 16, 0, 100, CFGFLAG_SERVER, "Probability for an infected to be a slime")
+MACRO_CONFIG_INT(InfProbaLeader, inf_proba_leader, 16, 0, 100, CFGFLAG_SERVER, "Probability for an infected to be a leader")
 MACRO_CONFIG_INT(InfProbaWitch, inf_proba_witch, 5, 0, 100, CFGFLAG_SERVER, "Probability for an infected to be a witch")
 MACRO_CONFIG_INT(InfProbaUndead, inf_proba_undead, 6, 0, 100, CFGFLAG_SERVER, "Probability for an infected to be an undead")
 
