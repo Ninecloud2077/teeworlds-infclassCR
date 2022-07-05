@@ -3,6 +3,7 @@
 #include <game/server/gamecontext.h>
 #include <engine/server/roundstatistics.h>
 #include <engine/shared/config.h>
+#include <game/server/entities/character.h>
 #include "hero-flag.h"
 
 CHeroFlag::CHeroFlag(CGameWorld *pGameWorld, int ClientID)
@@ -128,13 +129,13 @@ void CHeroFlag::GiveGift(CCharacter* pHero)
 
 			for(CCharacter *p = (CCharacter*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_CHARACTER); p; p = (CCharacter *)p->TypeNext())
 			{
-				if(p->IsHuman() || p == pHero)
+				if(p->IsHuman())
+					p->TakeDamage(vec2(0.0f, 0.0f), 1, pHero->GetPlayer()->GetCID(), WEAPON_SELF, TAKEDAMAGEMODE_NOINFECTION);
 					continue;
 
 				p->SetEmote(EMOTE_HAPPY, Server()->Tick() + Server()->TickSpeed());
 				GameServer()->SendEmoticon(p->GetPlayer()->GetCID(), EMOTICON_MUSIC);
 				p->GiveGift(GIFT_HEROFLAG);
-
 			}
 		}
 

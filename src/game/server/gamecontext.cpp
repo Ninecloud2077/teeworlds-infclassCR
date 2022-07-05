@@ -4051,6 +4051,8 @@ bool CGameContext::ConHelp(IConsole::IResult *pResult, void *pUserData)
 			pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("He can found the flag."), NULL);
 			Buffer.append("\n\n");
 			pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("Once taken, the flag gives full health point, 5 armor points to all zombies."), NULL);
+			Buffer.append("\n\n");
+			pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("Also, Leader can take 1 damage to all humans when he take a flag."), NULL);
 
 			pSelf->SendMOTD(ClientID, Buffer.buffer());
 		}

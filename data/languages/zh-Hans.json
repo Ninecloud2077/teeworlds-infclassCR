@@ -743,4 +743,9 @@
 		"key": "Once taken, the flag gives full health point, 5 armor points to all zombies.",
 		"value": "每次拿取旗帜可以为所有僵尸回复所有生命与5点护盾."
 	}
+	{
+		"key": "Also, Leader can take 1 damage to all humans when he take a flag.",
+		"value": "同时,首领会在拿到旗帜后对所有人类造成1伤害."
+	}
+	
 ]}
