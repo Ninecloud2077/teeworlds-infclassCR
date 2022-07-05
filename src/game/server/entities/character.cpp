@@ -43,7 +43,6 @@
 #include "superweapon-indicator.h"
 #include "laser-teleport.h"
 #include "police-shield.h"
-#include "leader-flag.h"
 
 //input count
 struct CInputCount
