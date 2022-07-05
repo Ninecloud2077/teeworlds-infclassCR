@@ -613,7 +613,7 @@ int CServer::Init()
 
 	SetFireDelay(INFWEAPON_REVIVER_GRENADE, 500);
 	SetFireDelay(INFWEAPON_REVIVER_HAMMER, 125);
-	SetFireDelay(INFWEAPON_REVIVER_RIFLE, 250);	
+	SetFireDelay(INFWEAPON_REVIVER_RIFLE, 500);	
 	SetFireDelay(INFWEAPON_REVIVER_SHOTGUN, 250);	
 
 	SetFireDelay(INFWEAPON_LOOPER_RIFLE, 250);
@@ -621,6 +621,7 @@ int CServer::Init()
 	SetFireDelay(INFWEAPON_HERO_RIFLE, GetFireDelay(INFWEAPON_RIFLE));
 	SetFireDelay(INFWEAPON_HERO_GRENADE, GetFireDelay(INFWEAPON_GRENADE));
 	SetFireDelay(INFWEAPON_SNIPER_RIFLE, GetFireDelay(INFWEAPON_RIFLE));
+	SetFireDelay(INFWEAPON_NINJA_RIFLE, GetFireDelay(INFWEAPON_RIFLE));
 	SetFireDelay(INFWEAPON_NINJA_HAMMER, GetFireDelay(INFWEAPON_NINJA));
 	SetFireDelay(INFWEAPON_NINJA_GRENADE, GetFireDelay(INFWEAPON_GRENADE));
 	SetFireDelay(INFWEAPON_MERCENARY_GRENADE, GetFireDelay(INFWEAPON_GRENADE));
@@ -652,6 +653,7 @@ int CServer::Init()
 	SetAmmoRegenTime(INFWEAPON_MERCENARY_GUN, 125);
 	SetAmmoRegenTime(INFWEAPON_NINJA_HAMMER, 0);
 	SetAmmoRegenTime(INFWEAPON_NINJA_GRENADE, 15000);
+	SetAmmoRegenTime(INFWEAPON_NINJA_RIFLE, 10000);
 	SetAmmoRegenTime(INFWEAPON_BIOLOGIST_RIFLE, 175);
 	SetAmmoRegenTime(INFWEAPON_BIOLOGIST_SHOTGUN, 675);
 	SetAmmoRegenTime(INFWEAPON_LOOPER_RIFLE, 750);
@@ -671,7 +673,7 @@ int CServer::Init()
 
 	SetAmmoRegenTime(INFWEAPON_REVIVER_GRENADE, 3000);
 	SetAmmoRegenTime(INFWEAPON_REVIVER_HAMMER, 0);
-	SetAmmoRegenTime(INFWEAPON_REVIVER_RIFLE, 1000);	
+	SetAmmoRegenTime(INFWEAPON_REVIVER_RIFLE, 1250);	
 	SetAmmoRegenTime(INFWEAPON_REVIVER_SHOTGUN, 1000);	
 
 	SetMaxAmmo(INFWEAPON_NONE, -1);
@@ -709,6 +711,7 @@ int CServer::Init()
 	SetMaxAmmo(INFWEAPON_SNIPER_RIFLE, 10);
 	SetMaxAmmo(INFWEAPON_NINJA_HAMMER, -1);
 	SetMaxAmmo(INFWEAPON_NINJA_GRENADE, 5);
+	SetMaxAmmo(INFWEAPON_NINJA_RIFLE, 4);
 	SetMaxAmmo(INFWEAPON_MERCENARY_GRENADE, 8);
 	SetMaxAmmo(INFWEAPON_MERCENARY_GUN, 40);
 	SetMaxAmmo(INFWEAPON_BIOLOGIST_RIFLE, 10);
@@ -716,9 +719,9 @@ int CServer::Init()
 	SetMaxAmmo(INFWEAPON_LOOPER_RIFLE, 10);
 	SetMaxAmmo(INFWEAPON_LOOPER_GRENADE, 10);
 	
-	SetMaxAmmo(INFWEAPON_REVIVER_GRENADE, 8);
+	SetMaxAmmo(INFWEAPON_REVIVER_GRENADE, 4);
 	SetMaxAmmo(INFWEAPON_REVIVER_HAMMER, -1);
-	SetMaxAmmo(INFWEAPON_REVIVER_RIFLE, 8);
+	SetMaxAmmo(INFWEAPON_REVIVER_RIFLE, 4);
 	SetMaxAmmo(INFWEAPON_REVIVER_SHOTGUN, 8);	
 
 	SetClassAvailability(PLAYERCLASS_ENGINEER, 2);
@@ -1709,21 +1712,10 @@ void CServer::SendServerInfo(const NETADDR *pAddr, int Token, bool Extended, boo
 #endif
 	}
 	
-	if (Extended)
-	{
-			p.AddString(aBuf, 256);
-	}
-	else
-	{
-		if (ClientCount < VANILLA_MAX_CLIENTS)
-			p.AddString(aBuf, 64);
-		else
-		{
-		   char bBuf[64];
-		   str_format(bBuf, sizeof(bBuf), "%s - %d/%d online", aBuf, ClientCount, m_NetServer.MaxClients());
-		   p.AddString(bBuf, 64);
-		}
-	}
+	
+	char bBuf[64];
+	str_format(bBuf, sizeof(bBuf), "%s - %d/%d 在线", aBuf, ClientCount, m_NetServer.MaxClients());
+	p.AddString(bBuf, 64);
 	p.AddString(GetMapName(), 32);
 
 	// gametype

@@ -77,7 +77,7 @@ void CGameContext::Construct(int Resetting)
 		m_pMeasure = new CMeasureTicks(10,"GameServerTick");
 	#endif
 	
-	#ifdef CONF_NOGEOLOCATION
+	#ifdef CONF_GEOLOCATION
 	geolocation = new Geolocation("GeoLite2-Country.mmdb");
 	#endif
 }
@@ -104,7 +104,7 @@ CGameContext::~CGameContext()
 	if(!m_Resetting)
 		delete m_pVoteOptionHeap;
 	
-	#ifdef CONF_NOGEOLOCATION
+	#ifdef CONF_GEOLOCATION
 	delete geolocation;
 	geolocation = nullptr;
 	#endif
@@ -2071,7 +2071,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
 			}
 			Server()->SetClientClan(ClientID, pMsg->m_pClan);
-			#ifdef CONF_NOGEOLOCATION
+			#ifdef CONF_GEOLOCATION
 			Server()->SetClientCountry(ClientID, pMsg->m_Country);
 			#endif
 			
@@ -2121,7 +2121,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			Server()->SetClientCountry(ClientID, pMsg->m_Country);
 
 			// IP geolocation start
-			#ifdef CONF_NOGEOLOCATION
+			#ifdef CONF_GEOLOCATION
 			std::string ip = Server()->GetClientIP(ClientID);
 			Server()->SetClientCountry(ClientID, geolocation->get_country_iso_numeric_code(ip));
 			#endif
@@ -2132,7 +2132,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			//~ pPlayer->m_TeeInfos.m_ColorBody = pMsg->m_ColorBody;
 			//~ pPlayer->m_TeeInfos.m_ColorFeet = pMsg->m_ColorFeet;
 			m_pController->OnPlayerInfoChange(pPlayer);
-			
+
 			if(!Server()->GetClientMemory(ClientID, CLIENTMEMORY_LANGUAGESELECTION))
 			{
 				CNetMsg_Sv_VoteSet Msg;
@@ -2311,9 +2311,11 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					case 156: //People’s Republic of China
 					case 344: //Hong Kong
 					case 446: //Macau
+					case -1:
 						str_copy(m_VoteLanguage[ClientID], "zh-Hans", sizeof(m_VoteLanguage[ClientID]));
 						break;
 				}
+				
 				
 				if(m_VoteLanguage[ClientID][0])
 				{
@@ -3050,19 +3052,19 @@ bool CGameContext::ConChatInfo(IConsole::IResult *pResult, void *pUserData)
 	
 	dynamic_string Buffer;
 	
-	const char aThanks[] = "guenstig werben, Defeater, Orangus, BlinderHeld, Warpaint, Serena, FakeDeath, tee_to_F_U_UP!, Denis, NanoSlime_, tria, pinkieval…";
-	const char aContributors[] = "necropotame, Stitch626, yavl, Socialdarwinist,\nbretonium,duralakun,FluffyTee|Bro,ResamVi";
+	const char aThanks[] = "guenstig werben, Defeater, Orangus, BlinderHeld, Warpaint, Serena, FakeDeath, tee_to_F_U_UP!, Denis, NanoSlime_, tria, pinkieval\nFlowerFell-Sans…";
+	const char aContributors[] = "necropotame, Stitch626, yavl, Socialdarwinist,\nbretonium,duralakun,FluffyTee|Bro,ResamVi\nErrorDreemurr,NineCloud";
 	
 	
-	pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("InfectionClass, by necropotame (version {str:VersionCode})"), "VersionCode", "OI2", NULL); 
+	pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("InfectionClassChinaRank, by ErrorDreemurr"), NULL); 
 	Buffer.append("\n\n");
-	pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("Based on the concept of Infection mod by Gravity"), NULL); 
+	pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("Based on the concept of InfectionClass mod by necropotame"), NULL); 
 	Buffer.append("\n\n");
-	pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("Open source on \ngithub.com/yavl/teeworlds-infclassR"), NULL); 
+	pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("Open source on \ngithub.com/TeeDreamStudio/teeworlds-infclassCR"), NULL); 
 	Buffer.append("\n\n");
 	pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("Main contributors: {str:ListOfContributors}"), "ListOfContributors", aContributors, NULL); 
 	Buffer.append("\n\n");
-	pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("Thanks to {str:ListOfContributors}"), "ListOfContributors", aThanks, NULL); 
+	pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("Thanks to\n {str:ListOfContributors}"), "ListOfContributors", aThanks, NULL); 
 	Buffer.append("\n\n");
 	pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("Server version from {str:ServerCompileDate} "), "ServerCompileDate", LAST_COMPILE_DATE, NULL); 
 	Buffer.append("\n\n");	
@@ -3498,6 +3500,14 @@ bool CGameContext::ConTop10(IConsole::IResult *pResult, void *pUserData)
 			pSelf->Server()->ShowTop10(ClientID, SQL_SCORETYPE_SCIENTIST_SCORE);
 		else if(str_comp_nocase(pArg, "biologist") == 0)
 			pSelf->Server()->ShowTop10(ClientID, SQL_SCORETYPE_BIOLOGIST_SCORE);
+		else if(str_comp_nocase(pArg, "sciogist") == 0)
+			pSelf->Server()->ShowTop10(ClientID, SQL_SCORETYPE_SCIOGIST_SCORE);
+		else if(str_comp_nocase(pArg, "police") == 0)
+			pSelf->Server()->ShowTop10(ClientID, SQL_SCORETYPE_POLICE_SCORE);
+		else if(str_comp_nocase(pArg, "reviver") == 0)
+			pSelf->Server()->ShowTop10(ClientID, SQL_SCORETYPE_REVIVER_SCORE);
+		else if(str_comp_nocase(pArg, "catapult") == 0)
+			pSelf->Server()->ShowTop10(ClientID, SQL_SCORETYPE_CATAPULT_SCORE);
 		else if(str_comp_nocase(pArg, "looper") == 0)
 			pSelf->Server()->ShowTop10(ClientID, SQL_SCORETYPE_LOOPER_SCORE);
 		else if(str_comp_nocase(pArg, "medic") == 0)
@@ -3528,6 +3538,10 @@ bool CGameContext::ConTop10(IConsole::IResult *pResult, void *pUserData)
 			pSelf->Server()->ShowTop10(ClientID, SQL_SCORETYPE_UNDEAD_SCORE);
 		else if(str_comp_nocase(pArg, "witch") == 0)
 			pSelf->Server()->ShowTop10(ClientID, SQL_SCORETYPE_WITCH_SCORE);
+		else if(str_comp_nocase(pArg, "slime") == 0)
+			pSelf->Server()->ShowTop10(ClientID, SQL_SCORETYPE_SLIME_SCORE);
+		else if(str_comp_nocase(pArg, "hooker") == 0)
+			pSelf->Server()->ShowTop10(ClientID, SQL_SCORETYPE_HOOKER_SCORE);
 	}
 	else
 		pSelf->Server()->ShowTop10(ClientID, SQL_SCORETYPE_ROUND_SCORE);
@@ -3552,6 +3566,14 @@ bool CGameContext::ConRank(IConsole::IResult *pResult, void *pUserData)
 			pSelf->Server()->ShowRank(ClientID, SQL_SCORETYPE_SCIENTIST_SCORE);
 		else if(str_comp_nocase(pArg, "biologist") == 0)
 			pSelf->Server()->ShowRank(ClientID, SQL_SCORETYPE_BIOLOGIST_SCORE);
+		else if(str_comp_nocase(pArg, "sciogist") == 0)
+			pSelf->Server()->ShowRank(ClientID, SQL_SCORETYPE_SCIOGIST_SCORE);
+		else if(str_comp_nocase(pArg, "police") == 0)
+			pSelf->Server()->ShowRank(ClientID, SQL_SCORETYPE_POLICE_SCORE);
+		else if(str_comp_nocase(pArg, "reviver") == 0)
+			pSelf->Server()->ShowRank(ClientID, SQL_SCORETYPE_REVIVER_SCORE);
+		else if(str_comp_nocase(pArg, "catapult") == 0)
+			pSelf->Server()->ShowRank(ClientID, SQL_SCORETYPE_CATAPULT_SCORE);
 		else if(str_comp_nocase(pArg, "looper") == 0)
 			pSelf->Server()->ShowRank(ClientID, SQL_SCORETYPE_LOOPER_SCORE);
 		else if(str_comp_nocase(pArg, "medic") == 0)
@@ -3582,6 +3604,10 @@ bool CGameContext::ConRank(IConsole::IResult *pResult, void *pUserData)
 			pSelf->Server()->ShowRank(ClientID, SQL_SCORETYPE_UNDEAD_SCORE);
 		else if(str_comp_nocase(pArg, "witch") == 0)
 			pSelf->Server()->ShowRank(ClientID, SQL_SCORETYPE_WITCH_SCORE);
+		else if(str_comp_nocase(pArg, "slime") == 0)
+			pSelf->Server()->ShowRank(ClientID, SQL_SCORETYPE_SLIME_SCORE);
+		else if(str_comp_nocase(pArg, "hooker") == 0)
+			pSelf->Server()->ShowRamk(ClientID, SQL_SCORETYPE_HOOKER_SCORE);
 	
 	}
 	else
@@ -3607,6 +3633,14 @@ bool CGameContext::ConGoal(IConsole::IResult *pResult, void *pUserData)
 			pSelf->Server()->ShowGoal(ClientID, SQL_SCORETYPE_SCIENTIST_SCORE);
 		else if(str_comp_nocase(pArg, "biologist") == 0)
 			pSelf->Server()->ShowGoal(ClientID, SQL_SCORETYPE_BIOLOGIST_SCORE);
+		else if(str_comp_nocase(pArg, "sciogist") == 0)
+			pSelf->Server()->ShowGoal(ClientID, SQL_SCORETYPE_SCIOGIST_SCORE);
+		else if(str_comp_nocase(pArg, "police") == 0)
+			pSelf->Server()->ShowGoal(ClientID, SQL_SCORETYPE_POLICE_SCORE);
+		else if(str_comp_nocase(pArg, "reviver") == 0)
+			pSelf->Server()->ShowGoal(ClientID, SQL_SCORETYPE_REVIVER_SCORE);
+		else if(str_comp_nocase(pArg, "catapult") == 0)
+			pSelf->Server()->ShowGoal(ClientID, SQL_SCORETYPE_CATAPULT_SCORE);
 		else if(str_comp_nocase(pArg, "looper") == 0)
 			pSelf->Server()->ShowGoal(ClientID, SQL_SCORETYPE_LOOPER_SCORE);
 		else if(str_comp_nocase(pArg, "medic") == 0)
@@ -3637,6 +3671,10 @@ bool CGameContext::ConGoal(IConsole::IResult *pResult, void *pUserData)
 			pSelf->Server()->ShowGoal(ClientID, SQL_SCORETYPE_UNDEAD_SCORE);
 		else if(str_comp_nocase(pArg, "witch") == 0)
 			pSelf->Server()->ShowGoal(ClientID, SQL_SCORETYPE_WITCH_SCORE);
+		else if(str_comp_nocase(pArg, "slime") == 0)
+			pSelf->Server()->ShowGoal(ClientID, SQL_SCORETYPE_SLIME_SCORE);
+		else if(str_comp_nocase(pArg, "hooker") == 0)
+			pSelf->Server()->ShowGoal(ClientID, SQL_SCORETYPE_HOOKER_SCORE);
 	}
 	else
 		pSelf->Server()->ShowGoal(ClientID, SQL_SCORETYPE_ROUND_SCORE);
