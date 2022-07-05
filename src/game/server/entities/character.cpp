@@ -2898,6 +2898,20 @@ void CCharacter::Tick()
 			);
 		}
 	}
+	else if(GetClass() == PLAYERCLASS_LEADER)
+	{
+		int CoolDown = m_pHeroFlag->GetCoolDown();
+		
+		if(CoolDown > 0)
+		{
+			int Seconds = 1+CoolDown/Server()->TickSpeed();
+			GameServer()->SendBroadcast_Localization(GetPlayer()->GetCID(), BROADCAST_PRIORITY_WEAPONSTATE, BROADCAST_DURATION_REALTIME,
+				_("Next flag in {sec:RemainingTime}"),
+				"RemainingTime", &Seconds,
+				NULL
+			);
+		}
+	}
 	else if(GetClass() == PLAYERCLASS_SPIDER)
 	{
 		if(m_HookMode > 0)
@@ -2929,6 +2943,13 @@ void CCharacter::GiveGift(int GiftType)
 {
 	IncreaseHealth(1);
 	IncreaseArmor(4);
+
+	if IsZombie()
+	{
+		IncreaseHealth(9);
+		IncreaseArmor(1);
+		return;
+	}
 	
 	switch(GetClass())
 	{
