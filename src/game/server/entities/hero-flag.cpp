@@ -60,49 +60,84 @@ void CHeroFlag::GiveGift(CCharacter* pHero)
 {
 	pHero->IncreaseHealth(10);
 	pHero->IncreaseArmor(10);
-	pHero->GiveWeapon(WEAPON_SHOTGUN, -1);
-	pHero->GiveWeapon(WEAPON_GRENADE, -1);
-	pHero->GiveWeapon(WEAPON_RIFLE, -1);
-	SetCoolDown();
-
-	pHero->SetEmote(EMOTE_HAPPY, Server()->Tick() + Server()->TickSpeed());
-	GameServer()->SendEmoticon(pHero->GetPlayer()->GetCID(), EMOTICON_MUSIC);
-  
-	if (g_Config.m_InfTurretEnable) 
+	switch(pHero->GetClass())
 	{
-		if (GameServer()->GetActivePlayerCount() > 2)
+		case PLAYERCLASS_HERO:
 		{
-			if(pHero->m_TurretCount < g_Config.m_InfTurretMaxPerPlayer)
+			pHero->GiveWeapon(WEAPON_SHOTGUN, -1);
+			pHero->GiveWeapon(WEAPON_GRENADE, -1);
+			pHero->GiveWeapon(WEAPON_RIFLE, -1);
+			SetCoolDown();
+
+			pHero->SetEmote(EMOTE_HAPPY, Server()->Tick() + Server()->TickSpeed());
+			GameServer()->SendEmoticon(pHero->GetPlayer()->GetCID(), EMOTICON_MUSIC);
+		
+			if (g_Config.m_InfTurretEnable) 
 			{
-				if (pHero->m_TurretCount == 0)
-				pHero->GiveWeapon(WEAPON_HAMMER, -1);
-					
-				pHero->m_TurretCount += g_Config.m_InfTurretGive;
-					
-				char aBuf[256];
-				str_format(aBuf, sizeof(aBuf), "you gained a turret (%i), place it with the hammer", pHero->m_TurretCount);
-				GameServer()->SendChatTarget_Localization(pHero->GetPlayer()->GetCID(), CHATCATEGORY_SCORE, aBuf, NULL);
+				if (GameServer()->GetActivePlayerCount() > 2)
+				{
+					if(pHero->m_TurretCount < g_Config.m_InfTurretMaxPerPlayer)
+					{
+						if (pHero->m_TurretCount == 0)
+						pHero->GiveWeapon(WEAPON_HAMMER, -1);
+							
+						pHero->m_TurretCount += g_Config.m_InfTurretGive;
+							
+						char aBuf[256];
+						str_format(aBuf, sizeof(aBuf), "you gained a turret (%i), place it with the hammer", pHero->m_TurretCount);
+						GameServer()->SendChatTarget_Localization(pHero->GetPlayer()->GetCID(), CHATCATEGORY_SCORE, aBuf, NULL);
+					}
+				}
+			}
+				
+			// Only increase your *own* character health when on cooldown
+			if (GameServer()->GetHeroGiftCoolDown() > 0)
+				return;
+
+			// Find other players	
+			GameServer()->SendBroadcast_Localization(-1, BROADCAST_PRIORITY_GAMEANNOUNCE, BROADCAST_DURATION_GAMEANNOUNCE, _("The Hero found the flag!"), NULL);
+			GameServer()->CreateSoundGlobal(SOUND_CTF_CAPTURE);
+			GameServer()->FlagCollected();
+
+			for(CCharacter *p = (CCharacter*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_CHARACTER); p; p = (CCharacter *)p->TypeNext())
+			{
+				if(p->IsZombie() || p == pHero)
+					continue;
+
+				p->SetEmote(EMOTE_HAPPY, Server()->Tick() + Server()->TickSpeed());
+				GameServer()->SendEmoticon(p->GetPlayer()->GetCID(), EMOTICON_MUSIC);
+				p->GiveGift(GIFT_HEROFLAG);
 			}
 		}
-	}
-		
-	// Only increase your *own* character health when on cooldown
-	if (GameServer()->GetHeroGiftCoolDown() > 0)
-		return;
 
-	// Find other players	
-	GameServer()->SendBroadcast_Localization(-1, BROADCAST_PRIORITY_GAMEANNOUNCE, BROADCAST_DURATION_GAMEANNOUNCE, _("The Hero found the flag!"), NULL);
-	GameServer()->CreateSoundGlobal(SOUND_CTF_CAPTURE);
-	GameServer()->FlagCollected();
+		case PLAYERCLASS_LEADER:
+		{
+			SetCoolDown();
 
-	for(CCharacter *p = (CCharacter*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_CHARACTER); p; p = (CCharacter *)p->TypeNext())
-	{
-		if(p->IsZombie() || p == pHero)
-			continue;
+			pHero->SetEmote(EMOTE_HAPPY, Server()->Tick() + Server()->TickSpeed());
+			GameServer()->SendEmoticon(pHero->GetPlayer()->GetCID(), EMOTICON_MUSIC);
+				
+			// Only increase your *own* character health when on cooldown
+			if (GameServer()->GetHeroGiftCoolDown() > 0)
+				return;
 
-		p->SetEmote(EMOTE_HAPPY, Server()->Tick() + Server()->TickSpeed());
-		GameServer()->SendEmoticon(p->GetPlayer()->GetCID(), EMOTICON_MUSIC);
-		p->GiveGift(GIFT_HEROFLAG);
+			// Find other players	
+			GameServer()->SendBroadcast_Localization(-1, BROADCAST_PRIORITY_GAMEANNOUNCE, BROADCAST_DURATION_GAMEANNOUNCE, _("The Leader found the flag!"), NULL);
+			GameServer()->CreateSoundGlobal(SOUND_CTF_CAPTURE);
+			GameServer()->FlagCollected();
+
+			for(CCharacter *p = (CCharacter*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_CHARACTER); p; p = (CCharacter *)p->TypeNext())
+			{
+				if(p->IsHuman() || p == pHero)
+					continue;
+
+				p->SetEmote(EMOTE_HAPPY, Server()->Tick() + Server()->TickSpeed());
+				GameServer()->SendEmoticon(p->GetPlayer()->GetCID(), EMOTICON_MUSIC);
+				p->GiveGift(GIFT_HEROFLAG);
+
+			}
+		}
+
 	}
 }
 
