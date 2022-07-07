@@ -114,9 +114,6 @@ void CHeroFlag::GiveGift(CCharacter* pHero)
 		case PLAYERCLASS_LEADER:
 		{
 			SetCoolDown();
-
-			pHero->SetEmote(EMOTE_HAPPY, Server()->Tick() + Server()->TickSpeed());
-			GameServer()->SendEmoticon(pHero->GetPlayer()->GetCID(), EMOTICON_MUSIC);
 				
 			// Only increase your *own* character health when on cooldown
 			if (GameServer()->GetHeroGiftCoolDown() > 0)
@@ -130,12 +127,15 @@ void CHeroFlag::GiveGift(CCharacter* pHero)
 			for(CCharacter *p = (CCharacter*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_CHARACTER); p; p = (CCharacter *)p->TypeNext())
 			{
 				if(p->IsHuman())
-					p->TakeDamage(vec2(0.0f, 0.0f), 1, pHero->GetPlayer()->GetCID(), WEAPON_SELF, TAKEDAMAGEMODE_NOINFECTION);
+					GameServer()->SendEmoticon(p->GetPlayer()->GetCID(), EMOTICON_DROP);
+					p->TakeDamage(vec2(0.0f, 0.0f), 1, pHero->GetPlayer()->GetCID(), WEAPON_SELF, TAKEDAMAGEMODE_ALL);
 					continue;
 
 				p->SetEmote(EMOTE_HAPPY, Server()->Tick() + Server()->TickSpeed());
 				GameServer()->SendEmoticon(p->GetPlayer()->GetCID(), EMOTICON_MUSIC);
 				p->GiveGift(GIFT_HEROFLAG);
+
+				break;
 			}
 		}
 
