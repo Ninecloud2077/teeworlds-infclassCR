@@ -21,7 +21,8 @@ enum
 enum
 {
 	FREEZEREASON_FLASH = 0,
-	FREEZEREASON_UNDEAD = 1
+	FREEZEREASON_UNDEAD = 1,
+	FREEZEREASON_INFECTION = 2
 };
 
 #define GHOST_RADIUS 11
@@ -216,12 +217,13 @@ public:
 	bool m_HasHealBoom;
 	bool m_HasIndicator;
 	bool m_HasStunGrenade;
+	bool m_ShieldExplode;
 	int m_BroadcastWhiteHoleReady;
 	int m_BroadcastElasticHoleReady;// used to broadcast "WhiteHole ready" for a short period of time
 	int m_BroadcastHealBoomReady;
 	int m_LoveTick;
 	int m_HallucinationTick;
-	bool m_HasSlime;
+	int m_ReloadSlimeTick;
 	int m_SlipperyTick;
 	int m_PoisonTick;
 	int m_Poison;
@@ -243,6 +245,7 @@ public:
 	CCharacterCore GetCore() { return m_Core; }
 	vec2 GetVel() { return m_Core.m_Vel;}
 	void SetVel(vec2 Vel) { m_Core.m_Vel = Vel;}
+	void SetPos(vec2 Pos) { m_Core.m_Pos = Pos;}
 	void DestroyChildEntities();
 	void ClassSpawnAttributes();
 	void GiveArmorIfLonely();

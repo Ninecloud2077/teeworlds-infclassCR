@@ -3824,10 +3824,6 @@ bool CGameContext::ConHelp(IConsole::IResult *pResult, void *pUserData)
 			pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("The Catapult can use elastic grenades."), NULL); 
 			Buffer.append("\n");
 			pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("He also has a laser-rifle that can fire a elastic entity."), NULL); 
-			Buffer.append("\n");
-			pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("If elatic entity collide wall, floor"), NULL); 
-			Buffer.append("\n");
-			pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("it will create a can't explode small elatic hole"), NULL); 
 			pSelf->SendMOTD(ClientID, Buffer.buffer());
 		}
 		else if(str_comp_nocase(pHelpPage, "police") == 0)
@@ -4390,6 +4386,27 @@ bool CGameContext::ConCmdList(IConsole::IResult *pResult, void *pUserData)
 	return true;
 }
 
+bool CGameContext::ConTeleport(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int Tele = pResult->NumArguments() == 2 ? pResult->GetInteger(0) : pResult->GetClientID();
+	int TeleTo = pResult->NumArguments() ? pResult->GetInteger(pResult->NumArguments() - 1) : pResult->GetClientID();
+
+	CCharacter *pChr = pSelf->GetPlayerChar(Tele);
+	if(pChr && pSelf->GetPlayerChar(TeleTo))
+	{
+		pSelf->Teleport(pChr, pSelf->m_apPlayers[TeleTo]->m_ViewPos);
+		return true;
+	}
+	return false;
+}
+
+void CGameContext::Teleport(CCharacter *pChr, vec2 Pos)
+{
+	pChr->SetPos(Pos);
+	pChr->m_Pos = Pos;
+}
+
 bool CGameContext::ConWitch(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
@@ -4471,7 +4488,8 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("clear_votes", "", CFGFLAG_SERVER, ConClearVotes, this, "Clears the voting options");
 	Console()->Register("vote", "r", CFGFLAG_SERVER, ConVote, this, "Force a vote to yes/no");
 	Console()->Register("start_fun_round", "", CFGFLAG_SERVER, ConStartFunRound, this, "Start fun round");
-	
+	Console()->Register("tele", "?ii", CFGFLAG_SERVER, ConTeleport, this, "Tele to client id player");
+
 /* INFECTION MODIFICATION START ***************************************/
 	Console()->Register("inf_set_class", "is", CFGFLAG_SERVER, ConSetClass, this, "Set the class of a player");
 	

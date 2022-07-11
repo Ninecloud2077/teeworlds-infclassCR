@@ -112,6 +112,7 @@ m_pConsole(pConsole)
 	m_InAirTick = 0;
 	m_InWater = 0;
 	m_BonusTick = 0;
+	m_ReloadSlimeTick = 0;
 	m_WaterJumpLifeSpan = 0;
 	m_NinjaVelocityBuff = 0;
 	m_NinjaStrengthBuff = 0;
@@ -119,8 +120,8 @@ m_pConsole(pConsole)
 	m_HasWhiteHole = false;
 	m_HasElasticHole = false;
 	m_HasHealBoom = false;
-	m_HasSlime = true;
 	m_HasIndicator = false;
+	m_ShieldExplode = false;
 	m_TurretCount = 0;
 	m_HasStunGrenade = false;
 	m_VoodooTimeAlive = Server()->TickSpeed()*g_Config.m_InfVoodooAliveTime;
@@ -423,6 +424,12 @@ void CCharacter::DoWeaponSwitch()
 		return;
 /* INFECTION MODIFICATION END *****************************************/
 
+	if(m_QueuedWeapon == WEAPON_HAMMER && GetClass() == PLAYERCLASS_POLICE)
+	{
+		GameServer()->SendBroadcast_Localization(m_pPlayer->GetCID(),
+			BROADCAST_PRIORITY_WEAPONSTATE, 100, "Use hammer to switch shield mode", NULL);
+	}
+
 	// switch Weapon
 	SetWeapon(m_QueuedWeapon);
 }
@@ -605,7 +612,7 @@ void CCharacter::FireWeapon()
 		return;
 /* INFECTION MODIFICATION END *****************************************/
 	
-	if(m_ReloadTimer != 0 && GetClass() != PLAYERCLASS_SLIME)
+	if(m_ReloadTimer != 0)
 		return;
 
 /* INFECTION MODIFICATION START ***************************************/
@@ -678,6 +685,17 @@ void CCharacter::FireWeapon()
 
 	if(GetInfWeaponID(m_ActiveWeapon) == INFWEAPON_POLICE_HAMMER)
 	{
+		m_ShieldExplode = !m_ShieldExplode;
+
+		const char *Mode = 0;
+
+		if(m_ShieldExplode)
+			Mode = Server()->Localization()->Localize(m_pPlayer->GetLanguage(), _("Explode"));
+		else 
+			Mode = Server()->Localization()->Localize(m_pPlayer->GetLanguage(), _("Defend"));
+
+		GameServer()->SendBroadcast_Localization(m_pPlayer->GetCID(),
+			BROADCAST_PRIORITY_WEAPONSTATE, 100, "Your shield mode is: {str:Mode}", "Mode", Mode, NULL);
 		return;
 	}
 
@@ -911,10 +929,11 @@ void CCharacter::FireWeapon()
 					Die(m_pPlayer->GetCID(), WEAPON_SELF);
 				}
 			}
-			else if(GetClass() == PLAYERCLASS_SLIME && m_HasSlime)
+			else if(GetClass() == PLAYERCLASS_SLIME && !m_ReloadSlimeTick)
 			{
 				new CSlimeEntity(GameWorld(), m_pPlayer->GetCID(), m_Pos, Direction);
 				GameServer()->CreateSound(m_Pos, SOUND_GUN_FIRE);
+				m_ReloadSlimeTick = g_Config.m_InfSlimeReloadTime;
 			}
 			else if(GetClass() == PLAYERCLASS_HERO)
 			{
@@ -1073,6 +1092,7 @@ void CCharacter::FireWeapon()
 							{
 								pTarget->TakeDamage(vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f, 20, 
 										m_pPlayer->GetCID(), m_ActiveWeapon, TAKEDAMAGEMODE_NOINFECTION);
+								GameServer()->CreateExplosion(m_Pos, m_pPlayer->GetCID(), WEAPON_HAMMER, false, TAKEDAMAGEMODE_NOINFECTION);
 							}
 							else
 							{
@@ -1167,23 +1187,7 @@ void CCharacter::FireWeapon()
 			}
 			else if(GetClass() == PLAYERCLASS_CATAPULT)
 			{
-				for(int i = 1;i <= 3;i++)
-				{
-					float Spreading[] = {-0.21f, -0.105f, 0.105f};
-					float angle = GetAngle(Direction);
-
-					float Speed = mix((float)GameServer()->Tuning()->m_ShotgunSpeeddiff, 1.0f, 0);
-
-					angle += Spreading[i] * 2.0f*(0.25f + 0.75f*static_cast<float>(10-3)/10.0f);
-					float LifeTime = GameServer()->Tuning()->m_ShotgunLifetime + 0.1f*static_cast<float>(m_aWeapons[WEAPON_SHOTGUN].m_Ammo)/10.0f;
-				
-					CProjectile *pProj = new CProjectile(GameWorld(), WEAPON_SHOTGUN,
-						m_pPlayer->GetCID(),
-						ProjStartPos,
-						vec2(cosf(angle), sinf(angle))*Speed,
-						(int)(Server()->TickSpeed()*LifeTime),
-						1, 0, 0, -1, WEAPON_SHOTGUN);	
-				}
+				new CLaser(GameWorld(), m_Pos, Direction, 400.0f, m_pPlayer->GetCID(), 2);
 				GameServer()->CreateSound(m_Pos, SOUND_GUN_FIRE);
 			}
 			else if(GetClass() == PLAYERCLASS_POLICE)
@@ -1415,7 +1419,7 @@ void CCharacter::FireWeapon()
 			{
 				for(int i = 1;i <= 3;i++)
 				{
-					float Spreading[] = {-0.42f, -0.21f, 0.21f};
+					float Spreading[] = {-0.315f, -0.210f, 0.105f};
 					float angle = GetAngle(Direction);
 					angle += Spreading[i] * 2.0f*(0.25f + 0.75f*static_cast<float>(10-3)/10.0f);
 					CSciogistGrenade *pSciGre = new CSciogistGrenade(GameWorld(), m_pPlayer->GetCID(), ProjStartPos, vec2(cosf(angle), sinf(angle)));
@@ -1711,20 +1715,27 @@ void CCharacter::HandleWeapons()
 		
 	//ninja
 	HandleNinja();
+	
+	//slime
+	if(m_ReloadSlimeTick)
+	{
+		m_ReloadSlimeTick--;
+		if(m_ReloadSlimeTick-1 == 0)
+		{
+			GameServer()->SendChatTarget_Localization(m_pPlayer->GetCID(), 
+			CHATCATEGORY_DEFAULT, "Slime entity is ready!");
+			GameServer()->SendBroadcast_Localization(m_pPlayer->GetCID(),
+			BROADCAST_PRIORITY_WEAPONSTATE, 100, "Slime entity is ready!");
+		}
+	}
+
 
 	// check reload timer
 	if(m_ReloadTimer)
 	{
 		m_ReloadTimer--;
-		if(GetClass() == PLAYERCLASS_SLIME)
-		{
-			m_HasSlime = false;
-			FireWeapon();
-		}
 		return;
 	}
-
-	m_HasSlime = true;
 	// fire Weapon, if wanted
 	FireWeapon();
 
@@ -1777,9 +1788,9 @@ void CCharacter::HandleWeapons()
 				if(GetClass() == PLAYERCLASS_SMOKER)
 				{
 					Rate = 0.5f;
-					if(VictimChar->GetClass() == PLAYERCLASS_POLICE && VictimChar->m_ActiveWeapon == WEAPON_HAMMER)
+					if(VictimChar->GetClass() == PLAYERCLASS_POLICE && VictimChar->m_ActiveWeapon == WEAPON_HAMMER && !VictimChar->m_ShieldExplode)
 					{
-						Damage = 3 * g_Config.m_InfSmokerHookDamage;
+						Damage = 2 * g_Config.m_InfSmokerHookDamage;
 					}
 					else Damage = g_Config.m_InfSmokerHookDamage;
 				}
@@ -1991,6 +2002,7 @@ void CCharacter::Tick()
 			else
 			{
 				m_pPlayer->StartInfection();
+				Freeze(3, m_pPlayer->GetCID(), FREEZEREASON_INFECTION);
 			}
 		}
 		if(m_Alive && (Index0 != ZONE_DAMAGE_INFECTION))
@@ -2370,7 +2382,18 @@ void CCharacter::Tick()
 					case CMapConverter::MENUCLASS_ENGINEER:
 						if(GameServer()->m_pController->IsChoosableClass(PLAYERCLASS_ENGINEER))
 						{
-							GameServer()->SendBroadcast_Localization(m_pPlayer->GetCID(), BROADCAST_PRIORITY_INTERFACE, BROADCAST_DURATION_REALTIME, _("Engineer"), NULL);
+							if((GameServer()->GetActivePlayerCount() >= g_Config.m_InfMinEngineerPlayer))
+							{
+								GameServer()->SendBroadcast_Localization(m_pPlayer->GetCID(), BROADCAST_PRIORITY_INTERFACE, BROADCAST_DURATION_REALTIME, _("Engineer"), NULL);
+							}
+							else
+							{
+								GameServer()->SendBroadcast_Localization_P(GetPlayer()->GetCID(), BROADCAST_PRIORITY_WEAPONSTATE, BROADCAST_DURATION_REALTIME, g_Config.m_InfMinEngineerPlayer,
+								_P("Need one player", "Need {int:MinPlayers} players"),
+								"MinPlayers", &g_Config.m_InfMinEngineerPlayer,
+								NULL
+								);	
+							}
 							Broadcast = true;
 						}
 						break;
@@ -2501,7 +2524,7 @@ void CCharacter::Tick()
 						Bonus = true;
 						break;
 					case CMapConverter::MENUCLASS_ENGINEER:
-						NewClass = PLAYERCLASS_ENGINEER;
+						if((GameServer()->GetActivePlayerCount() >= g_Config.m_InfMinEngineerPlayer))NewClass = PLAYERCLASS_ENGINEER;
 						break;
 					case CMapConverter::MENUCLASS_SOLDIER:
 						NewClass = PLAYERCLASS_SOLDIER;
@@ -2608,19 +2631,23 @@ void CCharacter::Tick()
 			m_Armor = 0;
 			if(pCurrentShield)
 				GameServer()->m_World.DestroyEntity(pCurrentShield);
-		}else if(!pCurrentShield && m_Pos.y > -20)
+		}else if(!pCurrentShield && m_Pos.y > -20 * 32)
 		{
 			new CPoliceShield(GameWorld(), m_pPlayer->GetCID());
 		}
 		else if(pCurrentShield)
 		{
-			if(m_Pos.y < -20)
+			if(m_Pos.y < -20 * 32)
 			{
 				GameServer()->m_World.DestroyEntity(pCurrentShield);
 			}
+			else if(!m_ShieldExplode)
+			{
+				m_Armor = 5;
+			}
 			else
 			{
-				m_Armor = 8;
+				m_Armor = 0;
 			}
 		}
 	}
@@ -3295,10 +3322,11 @@ void CCharacter::Die(int Killer, int Weapon)
 		GameServer()->SendBroadcast_Localization(-1, BROADCAST_PRIORITY_GAMEANNOUNCE, BROADCAST_DURATION_GAMEANNOUNCE, _("The undead is finally dead"), NULL);
 		GameServer()->CreateSoundGlobal(SOUND_CTF_RETURN);
 	}
-	else
+	else if(GameServer()->m_pController->IsInfectionStarted())
 	{
 		m_pPlayer->StartInfection(false);
 	}	
+
 	if (m_Core.m_Passenger) {
 		m_Core.m_Passenger->m_IsPassenger = false; // InfClassR taxi mode
 		m_Core.m_Passenger->m_ProbablyStucked = true;
@@ -3386,7 +3414,7 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int Mode)
 	
 	if(GetClass() == PLAYERCLASS_POLICE && GetInfWeaponID(m_ActiveWeapon) == INFWEAPON_POLICE_HAMMER && Mode == TAKEDAMAGEMODE_INFECTION)
 	{
-		Dmg = 15;
+		Dmg = 10;
 		// A zombie can't infect a use shield police
 		Mode = TAKEDAMAGEMODE_NOINFECTION;
 	}
@@ -4487,6 +4515,11 @@ void CCharacter::DestroyChildEntities()
 		if(pGrenade->m_Owner != m_pPlayer->GetCID()) continue;
 			GameServer()->m_World.DestroyEntity(pGrenade);
 	}
+	for(CHealBoom* pHB = (CHealBoom*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_HEAL_BOOM); pHB; pHB = (CHealBoom*) pHB->TypeNext())
+	{
+		if(pHB->m_Owner != m_pPlayer->GetCID()) continue;
+			GameServer()->m_World.DestroyEntity(pHB);
+	}
 	for(CMercenaryBomb *pBomb = (CMercenaryBomb*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_MERCENARY_BOMB); pBomb; pBomb = (CMercenaryBomb*) pBomb->TypeNext())
 	{
 		if(pBomb->m_Owner != m_pPlayer->GetCID()) continue;
@@ -4617,7 +4650,11 @@ void CCharacter::Freeze(float Time, int Player, int Reason)
 {
 	if(m_IsFrozen && m_FreezeReason == FREEZEREASON_UNDEAD)
 		return;
-	
+	if(Reason == FREEZEREASON_INFECTION)
+	{
+		GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_SHORT);
+		GameServer()->CreatePlayerSpawn(m_Pos);
+	}
 	m_IsFrozen = true;
 	m_FrozenTime = Server()->TickSpeed()*Time;
 	m_FreezeReason = Reason;
