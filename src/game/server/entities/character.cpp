@@ -2942,6 +2942,20 @@ void CCharacter::Tick()
 			);
 		}
 	}
+	else if(GetClass() == PLAYERCLASS_LEADER)
+	{
+		int CoolDown = m_pHeroFlag->GetCoolDown();
+		
+		if(CoolDown > 0)
+		{
+			int Seconds = 1+CoolDown/Server()->TickSpeed();
+			GameServer()->SendBroadcast_Localization(GetPlayer()->GetCID(), BROADCAST_PRIORITY_WEAPONSTATE, BROADCAST_DURATION_REALTIME,
+				_("Next flag in {sec:RemainingTime}"),
+				"RemainingTime", &Seconds,
+				NULL
+			);
+		}
+	}
 	else if(GetClass() == PLAYERCLASS_SPIDER)
 	{
 		if(m_HookMode > 0)
@@ -2973,6 +2987,13 @@ void CCharacter::GiveGift(int GiftType)
 {
 	IncreaseHealth(1);
 	IncreaseArmor(4);
+
+	if IsZombie()
+	{
+		IncreaseHealth(9);
+		IncreaseArmor(1);
+		return;
+	}
 	
 	switch(GetClass())
 	{
@@ -4379,6 +4400,21 @@ void CCharacter::ClassSpawnAttributes()
 			{
 				GameServer()->SendChatTarget_Localization(m_pPlayer->GetCID(), CHATCATEGORY_DEFAULT, _("Type “/help {str:ClassName}” for more information about your class"), "ClassName", "slime", NULL);
 				m_pPlayer->m_knownClass[PLAYERCLASS_SLIME] = true;
+			}
+			break;
+		case PLAYERCLASS_LEADER:
+			m_Health = 10;
+			m_Armor = 10;
+			RemoveAllGun();
+			m_aWeapons[WEAPON_HAMMER].m_Got = true;
+			GiveWeapon(WEAPON_HAMMER, -1);
+			m_ActiveWeapon = WEAPON_HAMMER;
+			
+			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_LEADER);
+			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_LEADER))
+			{
+				GameServer()->SendChatTarget_Localization(m_pPlayer->GetCID(), CHATCATEGORY_DEFAULT, _("Type “/help {str:ClassName}” for more information about your class"), "ClassName", "hunter", NULL);
+				m_pPlayer->m_knownClass[PLAYERCLASS_LEADER] = true;
 			}
 			break;
 		case PLAYERCLASS_UNDEAD:

@@ -276,7 +276,7 @@ void CGameContext::SetAvailabilities(std::vector<int> value) { // todo: should b
 
 void CGameContext::SetProbabilities(std::vector<int> value) { // todo: should be order-independent, e.g with std map
 	if (value.empty())
-		value = std::vector<int>(12);
+		value = std::vector<int>(13);
 	g_Config.m_InfProbaBat = value[0];
 	g_Config.m_InfProbaBoomer = value[1];
 	g_Config.m_InfProbaGhost = value[2];
@@ -289,6 +289,7 @@ void CGameContext::SetProbabilities(std::vector<int> value) { // todo: should be
 	g_Config.m_InfGhoulThreshold = value[9];
 	g_Config.m_InfGhoulStomachSize = value[10];
 	g_Config.m_InfProbaSlime = value[11];
+	g_Config.m_InfProbaLeader = value[12];
 }
 
 void CGameContext::CreateDamageInd(vec2 Pos, float Angle, int Amount)
@@ -836,6 +837,9 @@ void CGameContext::SendBroadcast_ClassIntro(int ClientID, int Class)
 		case PLAYERCLASS_SLIME:
 			pClassName = Server()->Localization()->Localize(m_apPlayers[ClientID]->GetLanguage(), _("Slime"));
 			break;
+		case PLAYERCLASS_LEADER:
+			pClassName = Server()->Localization()->Localize(m_apPlayers[ClientID]->GetLanguage(), _("Leader"));
+			break;	
 		case PLAYERCLASS_WITCH:
 			pClassName = Server()->Localization()->Localize(m_apPlayers[ClientID]->GetLanguage(), _("Witch"));
 			break;
@@ -1091,7 +1095,7 @@ void CGameContext::OnTick()
 	if(m_TargetToKillCoolDown > 0)
 		m_TargetToKillCoolDown--;
 	
-	if((m_TargetToKillCoolDown == 0 && m_TargetToKill == -1))
+	if((!m_TargetToKillCoolDown && m_TargetToKill == -1))
 	{
 		int m_aTargetList[MAX_CLIENTS];
 		int NbTargets = 0;
@@ -2859,7 +2863,8 @@ bool CGameContext::ConStartFunRound(IConsole::IResult *pResult, void *pUserData)
 		g_Config.m_InfProbaVoodoo,
 		g_Config.m_InfGhoulThreshold,
 		g_Config.m_InfGhoulStomachSize,
-		g_Config.m_InfProbaSlime
+		g_Config.m_InfProbaSlime,
+		g_Config.m_InfProbaLeader
 	};
 
 	// humans
@@ -3012,6 +3017,7 @@ bool CGameContext::ConSetClass(IConsole::IResult *pResult, void *pUserData)
 	else if(str_comp(pClassName, "ghoul") == 0) pPlayer->SetClass(PLAYERCLASS_GHOUL);
 	else if(str_comp(pClassName, "slug") == 0) pPlayer->SetClass(PLAYERCLASS_SLUG);
 	else if(str_comp(pClassName, "slime") == 0) pPlayer->SetClass(PLAYERCLASS_SLIME);
+	else if(str_comp(pClassName, "leader") == 0) pPlayer->SetClass(PLAYERCLASS_LEADER);
 	else if(str_comp(pClassName, "voodoo") == 0) pPlayer->SetClass(PLAYERCLASS_VOODOO);
 	else if(str_comp(pClassName, "undead") == 0) pPlayer->SetClass(PLAYERCLASS_UNDEAD);
 	else if(str_comp(pClassName, "witch") == 0) pPlayer->SetClass(PLAYERCLASS_WITCH);
@@ -3266,6 +3272,11 @@ bool CGameContext::PrivateMessage(const char* pStr, int ClientID, bool TeamChat)
 			{
 				CheckClass = PLAYERCLASS_SLIME;
 				str_copy(aChatTitle, "slime", sizeof(aChatTitle));
+			}
+			else if(str_comp(aNameFound, "!leader") == 0 && m_apPlayers[ClientID] && m_apPlayers[ClientID]->GetCharacter())
+			{
+				CheckClass = PLAYERCLASS_SLIME;
+				str_copy(aChatTitle, "leader", sizeof(aChatTitle));
 			}
 			else if(str_comp(aNameFound, "!undead") == 0 && m_apPlayers[ClientID] && m_apPlayers[ClientID]->GetCharacter())
 			{
@@ -4062,6 +4073,21 @@ bool CGameContext::ConHelp(IConsole::IResult *pResult, void *pUserData)
 			Buffer.append("\n\n");
 			pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("Touching the slime inflicts three damage points in three seconds on a human."), NULL);
 			
+			pSelf->SendMOTD(ClientID, Buffer.buffer());
+		}
+		else if(str_comp_nocase(pHelpPage, "leader") == 0)
+		{
+			Buffer.append("~~ ");
+			pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("Leader"), NULL);
+			Buffer.append(" ~~\n\n");
+			pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("The Leader can infect humans and heal infected with his hammer."), NULL);
+			Buffer.append("\n\n");
+			pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("He can found the flag."), NULL);
+			Buffer.append("\n\n");
+			pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("Once taken, the flag gives full health point, 5 armor points to all zombies."), NULL);
+			Buffer.append("\n\n");
+			pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("Also, Leader can take 1 damage to all humans when he take a flag."), NULL);
+
 			pSelf->SendMOTD(ClientID, Buffer.buffer());
 		}
 		else if(str_comp_nocase(pHelpPage, "voodoo") == 0)

@@ -1010,6 +1010,9 @@ int CGameControllerMOD::ChooseInfectedClass(const CPlayer *pPlayer) const
 	Probability[PLAYERCLASS_SLIME - START_INFECTEDCLASS - 1] =
 		(Server()->GetClassAvailability(PLAYERCLASS_SLIME)) ?
 		(double) g_Config.m_InfProbaSlime : 0.0f;
+	Probability[PLAYERCLASS_LEADER - START_INFECTEDCLASS - 1] =
+		(Server()->GetClassAvailability(PLAYERCLASS_LEADER)) ?
+		(double) g_Config.m_InfProbaSlime : 0.0f;
 	
 	Probability[PLAYERCLASS_WITCH - START_INFECTEDCLASS - 1] =
 		(Server()->GetClassAvailability(PLAYERCLASS_WITCH) && nbInfected > 2 && !thereIsAWitch) ?

@@ -212,6 +212,10 @@
 		"value": "粘液"
 	},
 	{
+		"key": "Leader",
+		"value": "首领"
+	}
+	{
 		"key": "Witch",
 		"value": "\u5deb\u5a46"
 	},
@@ -684,6 +688,10 @@
 		"value": "\u82f1\u96c4\u627e\u5230\u4e86\u65d7\u5e1c \uff01"
 	},
 	{
+		"key": "The Leader found the flag!",
+		"value": "首领找到了旗帜！"
+	}
+	{
 		"key": "heal boom found...",
 		"value": "已经找到治愈爆炸..."
 	},
@@ -758,5 +766,22 @@
 	{
 		"key": "And he has a grenades that hinder infected from harming.",
 		"value": "以及他有榴弹炮可以让感染者暂时无法造成伤害."
+	},
+	{
+		"key": "The Leader can infect humans and heal infected with his hammer.",
+		"value": "首领可以用锤子感染人类并治疗僵尸."
+	},
+	{
+		"key": "He can found the flag.",
+		"value": "它可以寻找旗帜."
+	},
+	{
+		"key": "Once taken, the flag gives full health point, 5 armor points to all zombies.",
+		"value": "每次拿取旗帜可以为所有僵尸回复所有生命与5点护盾."
 	}
+	{
+		"key": "Also, Leader can take 1 damage to all humans when he take a flag.",
+		"value": "同时,首领会在拿到旗帜后对所有人类造成1伤害."
+	}
+	
 ]}
